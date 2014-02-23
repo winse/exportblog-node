@@ -1,0 +1,9 @@
+{
+    "name": "exportblog",
+    "version": "0.0.1",
+    "dependencies": {
+        "cheerio": "0.13.1",
+        "bufferhelper": "0.2.0",
+        "underscore": "~1.5"
+    }
+}
