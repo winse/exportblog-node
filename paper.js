@@ -17,7 +17,6 @@ Cheerio.trim = core_trim && !core_trim.call("\uFEFF\xA0") ?
             "" :
             core_trim.call(text);
     } :
-
     // Otherwise use our own trimming functionality
     function (text) {
         return text == null ?
@@ -36,60 +35,6 @@ Cheerio.prototype.unwrap = function () {
         $(this).replaceWith(this.contents());
     }).end();
 };
-
-var Markdown = require('./to-markdown/src/to-markdown'),
-    converter = new Markdown.converter({
-        "jquery": $,
-        "elements": [ // for iteye
-            {
-                selector: 'div.quote_div',
-                replacement: function (innerHtml, el) {
-                    return ">" + innerHtml + "\n";
-                }
-            }
-        ]
-    });
-
-///////////////////////////
-//
-// / 生成Markdown内容
-//
-//////////////////////////
-
-/**
- * exports this function for test/debug
- */
-var toMarkdown = exports.toMarkdown = function (data) {
-    return converter.makeMd(data);
-}
-
-var makeMd = exports.makeMd = function (html, link, site) {
-    var detail = site.detail($(html));
-
-    var body = toMarkdown(detail.content);
-    var title = detail.title.replace(/"/g, "''");
-    var publishTime = detail.publishTime;
-    var categories = detail.categories;
-
-    var header = [
-        "---" ,
-        "layout: post",
-        "title: \"" + title + "\"",
-        "date: " + time(publishTime) + "",
-        "comments: true",
-        "categories: " + JSON.stringify(categories) + "",
-        "---",
-        "",
-        "[【原文地址】](" + link + ")",
-        "" // 与body间增加一空行
-    ];
-
-    return {
-        "date": date(publishTime),
-        "title": title,
-        "blog": header.join("\n") + body
-    }
-}
 
 function date(pubDate) {
     return dateformat(pubDate, "%Y-%m-%d");
@@ -129,3 +74,54 @@ function dateformat(date, style) {
 
     });
 }
+
+var Markdown = require('./to-markdown/src/to-markdown');
+var converter = new Markdown.converter({
+    "jquery": $,
+    "elements": [ // for iteye
+        {
+            selector: 'div.quote_div',
+            replacement: function (innerHtml, el) {
+                return ">" + innerHtml + "\n";
+            }
+        }
+    ]
+});
+
+///////////////////////////
+//
+// / 生成Markdown内容
+//
+//////////////////////////
+
+function toMarkdown(data) {
+    return converter.makeMd(data);
+}
+
+function makeMd(detail) {
+
+    var body = toMarkdown(detail.content);
+    var title = detail.title.replace(/"/g, "''");
+    var publishTime = detail.publishTime;
+    var categories = detail.categories;
+
+    var header = [
+        "---" ,
+        "layout: post",
+        "title: \"" + title + "\"",
+        "date: " + time(publishTime) + "",
+        "comments: true",
+        "categories: " + JSON.stringify(categories) + "",
+        "---",
+        "",
+        ""
+    ];
+
+    return {
+        "date": date(publishTime),
+        "title": title,
+        "blog": header.join("\n") + body
+    }
+}
+
+exports.make = makeMd;

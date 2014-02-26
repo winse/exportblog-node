@@ -5,8 +5,9 @@
 
 ## 支持导出的博客：
 
- * Iteye
- * qzone
- * sohu
+ * Iteye √
+ * qzone √
+ * sohu √
  * logdown
+ * jianshu
 
