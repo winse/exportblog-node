@@ -3,7 +3,7 @@ var http = require("http");
 var BufferHelper = require('bufferhelper');
 
 var _request = function (link, callback) {
-    http.get(
+    return http.get(
         link,
         function (resp) {
             var bh = new BufferHelper();
@@ -14,15 +14,20 @@ var _request = function (link, callback) {
             resp.on(
                 "end",
                 function () {
-                    callback(bh.toBuffer().toString());
+                    callback(bh.toBuffer());
                 }
             );
 
-        }
-    ).on(
+        } // 报错不处理，会抛出去！
+    );
+}
+
+var _queneRequest = function (link, callback) {
+    _request(link, callback)
+        .on(
         "error",
         function (e) {
-            console.log("获取" + link + "文章报错了，重新加入队列重试！", e);
+            console.error("获取" + link + "文章报错了，重新加入队列重试！", e);
             add(link, callback);
         }
     );
@@ -30,7 +35,7 @@ var _request = function (link, callback) {
 
 // 参考jquery.ba-jqmp.js
 var quene = [];
-var delay = 1500; //1s
+var delay = 1500; //1.5s
 var stop = true;
 var batch = 1;
 
@@ -53,11 +58,14 @@ var start = function () {
         var tasks = quene.splice(0, batch);
         for (var i in tasks) {
             var task = tasks[i];
-            _request(
+            _queneRequest(
                 task.link,
                 function (data) {
-                    task.callback && task.callback(data);
-                    console.log("\t\t\\- 还剩余任务： " + size());
+                    task.callback &&
+                    task.callback(data, function () {
+                        console.log("\t\t\\- 还剩余任务： " + size());
+                    });
+
                 }
             );
         }
@@ -79,4 +87,10 @@ var add = function (link, callback) {
 // iteye 不能访问太频繁！否则会重定向， 报connreset error
 exports.request = function (link, callback) {
     add(link, callback);
+}
+
+
+// 再弄一个js吧，写两个队列不就行了！
+exports.direct = function (link, callback) {
+    _request(link, callback);
 }

@@ -2,42 +2,44 @@ var fs = require("fs");
 
 var $ = require("cheerio");
 var _ = require("underscore");
+var iconv = require('iconv-lite');
 
 var req = require("./request.js");
 var onePage = require("./page.js");
+var configs = require("./config.js");
 
-var genFolder = "D:/winsegit/winse.github.com/iteye/_posts";
-var gotList = function (blog) {
+var exportAll = function (site) {
 
-    var pageList = function (url) {
+    var exportOneAll = function (url) {
         req.request(
             url,
-            function (content) {
-                console.log("blogs page @ : " + url);
+            function (buff, callback) {
+                var html = site.charset ? iconv.decode(buff, site.charset) : buff.toString();
 
-                var $content = $(content);
-                var urls = $content.find("#main .blog_main .blog_title h3 a[href]")
+                console.log("blogs list @ : " + url);
 
-                if (urls.length <= 0) {
-                    console.log("查询不到对应文章，获取内容为： ");
-                    console.log(content);
+                var $links = site.list(html);
+
+                if (!$links) {
+                    console.log("查询不到对应文章，或者日志已经全部导出！当前内容为： ");
+                    console.log(html);
                     return;
                 }
 
-                urls.each(function (index, value) {
-                    onePage.page(blog + $(value).attr("href"), {"folder": genFolder});
+                $links.each(function (index, value) {
+                    onePage.page(value, {"site": site, "folder": site.gen});
                 });
 
-                var $nextPage = $content.find("#main .pagination a.next_page");
-                if ($nextPage.length > 0) {
-                    pageList(blog + $nextPage.attr("href"));
+                var nextPage = site.next(html);
+                if (nextPage) {
+                    exportOneAll(nextPage);
                 }
             }
         );
     }
 
-    pageList(blog);
+    exportOneAll(site.url);
 }
 
-fs.mkdir(genFolder);
-gotList("http://winse.iteye.com");
+
+exportAll(configs.qzone);

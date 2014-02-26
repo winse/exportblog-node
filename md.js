@@ -25,9 +25,7 @@ Cheerio.trim = core_trim && !core_trim.call("\uFEFF\xA0") ?
             ( text + "" ).replace(rtrim, "");
     };
 
-Cheerio.isArray = function(arr){
-    return arr && typeof arr === "array";
-}
+Cheerio.isArray = util.isArray;
 
 Cheerio.prototype.index = function (item) {
     return _.indexOf(this, item);
@@ -58,29 +56,26 @@ var Markdown = require('./to-markdown/src/to-markdown'),
 //
 //////////////////////////
 
-function toMarkdown(data) {
+/**
+ * exports this function for test/debug
+ */
+var toMarkdown = exports.toMarkdown = function (data) {
     return converter.makeMd(data);
 }
 
-var makeMd = exports.makeMd = function ($main, link) {
+var makeMd = exports.makeMd = function (html, link, site) {
+    var detail = site.detail($(html));
 
-    var content = $main.find("#blog_content").html();
-    var body = toMarkdown(content);
-
-    //title
-    var title = $main.find(".blog_title h3 a").text();
-
-    var publishTime = $main.find(".blog_bottom > ul > li").first().text();
-
-    var categories = $main.find(".blog_title .blog_categories li").map(function (index, value) {
-        return $(value).text()
-    }).toArray();
+    var body = toMarkdown(detail.content);
+    var title = detail.title.replace(/"/g, "''");
+    var publishTime = detail.publishTime;
+    var categories = detail.categories;
 
     var header = [
         "---" ,
         "layout: post",
-        "title: \"" + title.replace(/"/g, "''") + "\"",
-        "date: " + publishTime + "",
+        "title: \"" + title + "\"",
+        "date: " + time(publishTime) + "",
         "comments: true",
         "categories: " + JSON.stringify(categories) + "",
         "---",
@@ -90,14 +85,47 @@ var makeMd = exports.makeMd = function ($main, link) {
     ];
 
     return {
-        "date": publishTime.split(" ")[0],
+        "date": date(publishTime),
+        "title": title,
         "blog": header.join("\n") + body
     }
 }
 
-function toMarkdownDebug() {
-    fs.readFile("test.html", function (error, data) {
-        var content = data.toString();
-        console.log(toMarkdown(content));
-    })
+function date(pubDate) {
+    return dateformat(pubDate, "%Y-%m-%d");
+}
+
+function time(pubDate) {
+    return dateformat(pubDate, "%Y-%m-%d %H-%M");
+}
+
+function dateformat(date, style) {
+
+    return style.replace(/%[YmdHMs]{1}/g, function (m) {
+
+        var t;
+        switch (m) {
+            case '%Y' :
+                return date.getFullYear();
+            case '%m' :
+                t = date.getMonth() + 1;
+                break;
+            case '%d' :
+                t = date.getDate();
+                break;
+            case '%H' :
+                t = date.getHours();
+                break;
+            case '%M' :
+                t = date.getMinutes();
+                break;
+            case '%s' :
+                t = date.getSeconds();
+                break;
+            default:
+                throw "不可能到达的代码位置";
+        }
+        return ("0" + t).slice(-2);
+
+    });
 }

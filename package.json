@@ -1,9 +1,22 @@
 {
     "name": "exportblog",
+    "description": "export public blog to local markdown files.",
     "version": "0.0.1",
     "dependencies": {
         "cheerio": "0.13.1",
         "bufferhelper": "0.2.0",
-        "underscore": "~1.5"
-    }
+        "underscore": "~1.5",
+        "iconv-lite": "0.2.11"
+    },
+    "author": {
+        "name": "winseliu",
+        "email": "winseliu@foxmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "main": "index.js",
+    "files": [
+    ]
 }
