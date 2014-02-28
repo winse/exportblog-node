@@ -84,6 +84,12 @@ var converter = new Markdown.converter({
             replacement: function (innerHtml, el) {
                 return ">" + innerHtml + "\n";
             }
+        },
+        {
+            selector: 'figure, figcaption',
+            replacement: function(innerHtml, el){
+                return innerHtml;
+            }
         }
     ]
 });

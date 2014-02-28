@@ -1,4 +1,5 @@
 var http = require("http");
+var url = require("url");
 
 var BufferHelper = require('bufferhelper');
 
@@ -8,7 +9,7 @@ function request_pool(name) {
         quene = [], // 参考jquery.ba-jqmp.js
 
         batch = 1, // 每次时间间隔点执行的任务数
-        delay = 1500, //1.5s
+        delay = 2000, //1.5s
 
         stop = true;
 
@@ -19,6 +20,13 @@ function request_pool(name) {
     }
 
     function requestAsync(link, op) {
+//        console.log("开始请求： " + link);
+
+        /*var options = url.parse(link);
+        options.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.102 Safari/537.36"
+        }*/
+
         http.get(link,
             function (resp) {
                 var bh = new BufferHelper();
@@ -67,6 +75,7 @@ function request_pool(name) {
                         if (task.op) {
                             var finishCallback = function () {
                                 console.log("\t\t\\- @" + name + " 还剩余任务： " + size());
+
                             }
                             task.op(data, finishCallback);
                         }

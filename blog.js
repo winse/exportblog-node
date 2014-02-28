@@ -22,40 +22,17 @@ function mkdirs(fold, callback) {
 
 }
 
-function html_encode(str) {
-    if (str.length == 0) return "";
-
-    var s = str.replace(/&/g, "&gt;");
-    s = s.replace(/</g, "&lt;");
-    s = s.replace(/>/g, "&gt;");
-    s = s.replace(/ /g, "&nbsp;");
-    s = s.replace(/\'/g, "&#39;");
-    s = s.replace(/\"/g, "&quot;");
-    return s;
-}
-
-function html_decode(str) {
-    if (str.length == 0) return "";
-
-    var s = str.replace(/&gt;/g, "&");
-    s = s.replace(/&lt;/g, "<");
-    s = s.replace(/&gt;/g, ">");
-    s = s.replace(/&nbsp;/g, " ");
-    s = s.replace(/&#39;/g, "\'");
-    s = s.replace(/&quot;/g, "\"");
-    return s;
-}
-
 var paper = require("./paper.js");
 var RequestPool = require("./RequestPool.js"),
-    request = RequestPool.create("ExportBlog");
+    request = RequestPool.create("ExportBlog"),
+    translateReq = RequestPool.create("TRS");
 
 function translate(title, callback) {
     var q = encodeURIComponent(title.replace(/[[\]【】]/g, ''));
 
-    RequestPool.create().submit
+    translateReq.submit
     (
-        "http://translate.google.cn/translate_a/t?client=t&sl=zh-CN&tl=en&hl=en&sc=2&ie=UTF-8&oe=UTF-8&oc=1&otf=2&srcrom=1&ssel=4&tsel=6&q=" + q
+        "http://translate.google.com.au/translate_a/t?client=t&sl=zh-CN&tl=en&hl=zh-CN&sc=2&ie=UTF-8&oe=UTF-8&prev=btn&ssel=3&tsel=6&q=" + q
         ,
         function (buff) {
             var transfer = buff.toString();
@@ -87,14 +64,13 @@ function blog(site) {
                 var process = function (realBuff) {
                     var charset = site.charset;
                     var data = charset ? iconv.decode(realBuff, charset) : realBuff.toString();
-                    data = html_decode(data);
 
                     op && op(data, nextCallback);
                 }
 
                 site.gzip ?
                     zlib.gunzip(buff, function (err, realBuff) {
-                        err ? process(buff) : process(realBuff) ;
+                        err ? process(buff) : process(realBuff);
                     })
                     :
                     (function () {
@@ -116,10 +92,11 @@ function blog(site) {
             :
             (function () {
                 var path = url.parse(link),
-                    hostname = path.hostname,
+//                    hostname = path.hostname,
                     pathname = path.path;
 
-                var filename = detail.date + "-" + hostname.replace(/\./g, "-") + pathname.replace(/[/?=\\&]/g, "-") + ".md"
+                var name = pathname.replace(/[/?=\\&]/g, "-");
+                var filename = detail.date + "-" + name + ".md"
                 callback && callback(filename);
             })();
     }
@@ -140,11 +117,11 @@ function blog(site) {
     var page = function (link) {
 
         fetch(link,
-            function (html, nextCallback) {
-                var detail = paper.make(site.raw($(html)));
+            function (html, finishCallback) {
+                var detail = paper.make(site.raw(html));
                 filename(detail, link, function (name) {
                     var content = detail.blog + "\n\n* * * \n[【原文地址】](" + link + ")\n";
-                    save(site.folder, name, content, nextCallback);
+                    save(site.folder, name, content, finishCallback);
                 })
             }
         )
@@ -162,8 +139,8 @@ function blog(site) {
                     var $links = site.list(html);
 
                     if (!$links) {
-                        console.log("查询不到对应文章，或者日志已经全部导出！当前内容为： ");
-                        console.log(html);
+                        console.warn("查询不到对应文章，请确认日志是否公开！或者日志已经全部导出！ ");
+                        // console.error("当前内容为：\n" + html);
                         return;
                     }
 
@@ -179,7 +156,18 @@ function blog(site) {
             );
         }
 
-        exportOneAll(site.url);
+        var firstListPageURLFunc = function (url, callback) {
+            fetch(url, function (html, finishCallback) {
+                var firstListPageURL = site.firstListPage(html)
+                callback && callback(firstListPageURL);
+            });
+        }
+
+        site.firstListPageURL ?
+            exportOneAll(site.firstListPageURL)
+            :
+            firstListPageURLFunc(site.url, exportOneAll);
+
     }
 
     self.export = page;

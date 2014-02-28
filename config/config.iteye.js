@@ -2,10 +2,12 @@ var $ = require("cheerio");
 
 module.exports = (function () {
 
+    var username = "winse";
     var self = {},
         options = {
-            "gds": false, // 文件名根据标题翻译成英文形式， 或者直接使用url链接作为文件名。 高大上的简写 ^_^
-            "url": "http://winse.iteye.com", //列表的第一页 http://{0}.iteye.com/
+            "url": "http://" + username + ".iteye.com",
+            "firstListPageURL": "http://" + username + ".iteye.com",
+            "gds": true, // 文件名根据标题翻译成英文形式， 或者直接使用url链接作为文件名。 高大上的简写 ^_^
             "folder": "D:/winsegit/winse.github.com/iteye/_posts"
         };
 
@@ -36,7 +38,8 @@ module.exports = (function () {
         return false;
     }
 
-    self.raw = function ($html) {
+    self.raw = function (html) {
+        var $html = $(html);
         var $main = $html.find("#main");
 
         var content = $main.find("#blog_content").html();

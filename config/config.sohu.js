@@ -1,21 +1,30 @@
 var $ = require("cheerio");
-
+var dynamicJs = require("./block-javascript-parser")
 
 var sohu = (function () {
 
-    var m = 1;
-    var entryPage = function () {
-        return "http://winsefirst.blog.sohu.com/action/v_frag-ebi_1c77ca4892-pg_" + m + "/entry/";
-    }
+    var nextFetchListPage = (function () {
+        var current_page = 1;
+
+        // FIXME 会一直到max+1页！然后报错！
+        return function () {
+            var pageURL = "http://winsefirst.blog.sohu.com/action/v_frag-ebi_" + _ebi + "-pg_" + current_page + "/entry/";
+            current_page++;
+            return pageURL;
+        };
+    })();
 
     var self = {},
         options = {
+            "url": "http://winsefirst.blog.sohu.com/entry/",
+            // see function firstListPage
             "gds": false,
-            "url": entryPage(),
             "folder": "D:/winsegit/winse.github.com/sohu/_posts",
             "charset": "GBK",
             "gzip": true
-        };
+        },
+        _ebi
+        ;
 
     for (var key in options) {
         if (!/^_/.test(key)) // _开头的内部使用
@@ -34,13 +43,22 @@ var sohu = (function () {
         return false;
     }
 
-    self.next = function ($html) {
-        m++;
-        return entryPage();
+    self.firstListPage = function (html) {
+        var js = $(html).find("html script").first().text();
+        var blogArguments = dynamicJs(js);
+
+        _ebi = blogArguments["_ebi"];
+
+        return nextFetchListPage();
     }
 
-    self.raw = function ($html) {
+    self.next = function (html) {
+        return nextFetchListPage();
+    }
 
+    self.raw = function (html) {
+
+        var $html = $(html);
         var $main = $html.find("#entry");
 
         var content = $main.find("#main-content div[style]").html();

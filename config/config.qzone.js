@@ -1,26 +1,27 @@
-var $ = require("cheerio");
-
-var vm = require("vm");
-function dynamicJs(js) {
-    var sandbox = {};
-    vm.runInNewContext(js, sandbox);
-    return sandbox;
-}
+var $ = require("cheerio")
+var dynamicJs = require("./block-javascript-parser")
 
 module.exports = (function () {
 
-    var pos = 0;
+    var qq = "10226799";
+    var nextFetchListPage = (function () {
+        var pos = 0;
+        var defaultNum = 50;
 
-    function lists(num) {
-        var listUrl = "http://b1.qzone.qq.com/cgi-bin/blognew/get_abs?hostUin=251788991&blogType=0&cateName=&cateHex=&statYear=&reqInfo=1&pos=" + pos + "&num=" + num + "&sortType=0&absType=0&source=0";
-        pos += num;
-        return listUrl;
-    }
+        return function (n) {
+            var num = n || defaultNum;
+
+            var pageURL = "http://b1.qzone.qq.com/cgi-bin/blognew/get_abs?hostUin=" + qq + "&blogType=0&cateName=&cateHex=&statYear=&reqInfo=1&pos=" + pos + "&num=" + num + "&sortType=0&absType=0&source=0";
+            pos += num;
+            return pageURL;
+        };
+    })();
 
     var self = {},
         options = {
-            "gds": true,
-            "url": lists(50),
+            "url": "http://user.qzone.qq.com/" + qq + "/",
+            "firstListPageURL": nextFetchListPage(),
+            "gds": false,
             "folder": "D:/winsegit/winse.github.com/qzone/_posts",
             "charset": "GBK"
         };
@@ -36,18 +37,19 @@ module.exports = (function () {
         var list = blogs.data.list;
         if (list && list.length > 0) {
             return $(list).map(function (index, blog) {
-                return "http://b1.qzone.qq.com/cgi-bin/blognew/blog_output_data?uin=251788991&blogid=" + blog.blogId + "&mode=2&numperpage=15&dprefix=&ref=qzone&page=1";
+                return "http://b1.qzone.qq.com/cgi-bin/blognew/blog_output_data?uin=" + qq + "&blogid=" + blog.blogId + "&mode=2&numperpage=15&dprefix=&ref=qzone&page=1";
             });
         }
 
         return false;
     }
 
-    self.next = function ($html) {
-        return lists(50);
+    self.next = function (html) {
+        return nextFetchListPage();
     }
 
-    self.raw = function ($html) {
+    self.raw = function (html) {
+        var $html = $(html);
         var content = $html.find("#blogDetailDiv").html();
 
         var $info = $html.find("#app_mod script").filter(function (index, data) {
