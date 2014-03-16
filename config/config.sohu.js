@@ -18,7 +18,7 @@ var sohu = (function () {
         options = {
             "url": "http://winsefirst.blog.sohu.com/entry/",
             // see function firstListPage
-            "gds": false,
+            "gds": true,
             "folder": "D:/winsegit/winse.github.com/sohu/_posts",
             "charset": "GBK",
             "gzip": true

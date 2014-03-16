@@ -21,8 +21,8 @@ module.exports = (function () {
         options = {
             "url": "http://user.qzone.qq.com/" + qq + "/",
             "firstListPageURL": nextFetchListPage(),
-            "gds": false,
-            "folder": "D:/winsegit/winse.github.com/qzone/_posts",
+            "gds": true,
+            "folder": "D:/winsegit/winse.github.com/qzone" + qq + "/_posts",
             "charset": "GBK"
         };
 

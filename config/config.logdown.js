@@ -15,7 +15,7 @@ module.exports = (function () {
             self[key] = options[key];
     }
 
-    // 不同的模板，获取方式不同！！
+    // XXX 不同的模板，获取方式不同！！
     self.list = function (html) {
         var $html = $(html);
         var urls = $html.find("div.article ul.archive-list li.archive a[href]");
@@ -28,6 +28,7 @@ module.exports = (function () {
         return false;
     }
 
+    // XXX 暂时用的模板就只有一页的！等以后遇到了再改！
     self.next = function (html) {
         return false;
     }

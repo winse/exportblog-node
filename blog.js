@@ -32,7 +32,7 @@ function translate(title, callback) {
 
     translateReq.submit
     (
-        "http://translate.google.com.au/translate_a/t?client=t&sl=zh-CN&tl=en&hl=zh-CN&sc=2&ie=UTF-8&oe=UTF-8&prev=btn&ssel=3&tsel=6&q=" + q
+        "http://translate.google.cn/translate_a/t?client=t&sl=zh-CN&tl=en&hl=zh-CN&sc=2&ie=UTF-8&oe=UTF-8&prev=btn&ssel=3&tsel=6&q=" + q
         ,
         function (buff) {
             var transfer = buff.toString();
@@ -40,7 +40,7 @@ function translate(title, callback) {
             var enMsg = transfer.match(/^[[]{1,}[[](.*?)[\]]/)[1];
 
             var enName = JSON.parse("[" + enMsg + "]")[0];
-            enName = enName.replace(/["'“”‘’\\,，?？。.()&:：~！!^]/g, '')
+            enName = enName.replace(/["'“”‘’\\\/,，?？。.()&:：~！!^<>]/g, '')
                 .replace("_", "-").replace(/\s+/g, '-').replace(/^-+/, '').replace(/-+$/, '')
                 .toLowerCase();
 
@@ -104,10 +104,17 @@ function blog(site) {
 
     var save = function (folder, filename, data, finishCallback) {
         var persist = function () {
-            fs.writeFile(folder + "/" + filename, data);
+            var path = folder + "/" + filename;
+            fs.exists(path, function(exists){
+                if(exists){
+                    // 重名处理
+                    filename += new Date().getTime();
+                }
+                fs.writeFile(folder + "/" + filename, data);
 
-            console.log("完成任务, 写到文件： " + filename);
-            finishCallback && finishCallback();
+                console.log("完成任务, 写到文件： " + filename);
+                finishCallback && finishCallback();
+            });
         }
 
         // 创建目录，然后写入文件
@@ -118,11 +125,15 @@ function blog(site) {
 
         fetch(link,
             function (html, finishCallback) {
-                var detail = paper.make(site.raw(html));
-                filename(detail, link, function (name) {
-                    var content = detail.blog + "\n\n* * * \n[【原文地址】](" + link + ")\n";
-                    save(site.folder, name, content, finishCallback);
-                })
+                try {
+                    var detail = paper.make(site.raw(html));
+                    filename(detail, link, function (name) {
+                        var content = detail.blog + "\n\n* * * \n[【原文地址】](" + link + ")\n";
+                        save(site.folder, name, content, finishCallback);
+                    })
+                } catch (e) {
+                    console.error("解析文件报错：" + link);
+                }
             }
         )
 
