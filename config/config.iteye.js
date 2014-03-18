@@ -1,19 +1,31 @@
 var $ = require("cheerio");
+var _ = require("underscore");
 
 module.exports = (function () {
 
-    var username = "winse";
     var self = {},
-        options = {
-            "url": "http://" + username + ".iteye.com",
-            "firstListPageURL": "http://" + username + ".iteye.com",
-            "gds": true, // 文件名根据标题翻译成英文形式， 或者直接使用url链接作为文件名。 高大上的简写 ^_^
-            "folder": "D:/winsegit/winse.github.com/iteye/_posts"
-        };
+        options = {};
 
-    for (var key in options) {
-        if (!/^_/.test(key)) // _开头的内部使用
-            self[key] = options[key];
+    self.match = function (url) {
+        var ms = url.match(/(http:\/\/)?([^.]*)\.(iteye\.com)/);
+        return ms && ms[2];
+    }
+
+    self.initialize = function (username, folder) {
+        var url = "http://" + username + ".iteye.com";
+        options = _.extend(
+            options,
+            {
+                "url": url,
+                "firstListPageURL": url,
+                "gds": true,
+                "folder": folder || "D:/winsegit/winse.github.com/ext/iteye/_posts"
+            });
+
+        for (var key in options) {
+            if (!/^_/.test(key)) // _开头的内部使用
+                self[key] = options[key];
+        }
     }
 
     self.list = function (html) {
@@ -52,7 +64,10 @@ module.exports = (function () {
         return {
             "content": content,
             "title": title,
-            "publishTime": new Date(publish),
+            "publishTime": (function () { // FIXME 不是日期格式，转换会出错。如**1 小时前**
+                var d = new Date(publish);
+                return isNaN(d.getTime()) ? new Date() : d;
+            })(),
             "categories": categories.toArray()
         }
     }

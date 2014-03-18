@@ -5,6 +5,7 @@ var zlib = require("zlib");
 
 var iconv = require('iconv-lite');
 var $ = require("cheerio");
+var _ = require("underscore");
 
 function mkdirs(fold, callback) {
 
@@ -105,8 +106,8 @@ function blog(site) {
     var save = function (folder, filename, data, finishCallback) {
         var persist = function () {
             var path = folder + "/" + filename;
-            fs.exists(path, function(exists){
-                if(exists){
+            fs.exists(path, function (exists) {
+                if (exists) {
                     // 重名处理
                     filename += new Date().getTime();
                 }
@@ -132,7 +133,7 @@ function blog(site) {
                         save(site.folder, name, content, finishCallback);
                     })
                 } catch (e) {
-                    console.error("解析文件报错：" + link);
+                    console.error("解析文件报错：" + link, e);
                 }
             }
         )
@@ -170,12 +171,16 @@ function blog(site) {
         var firstListPageURLFunc = function (url, callback) {
             fetch(url, function (html, finishCallback) {
                 var firstListPageURL = site.firstListPage(html)
-                callback && callback(firstListPageURL);
+                firstListPageURL && callback && callback(firstListPageURL);
             });
         }
 
-        site.firstListPageURL ?
-            exportOneAll(site.firstListPageURL)
+        // FIXME 总觉得这里处理的不太好！！
+        var firstPage = site.firstListPageURL;
+        firstPage ?
+            exportOneAll(
+                _.isFunction(firstPage) ? firstPage() : firstPage
+            )
             :
             firstListPageURLFunc(site.url, exportOneAll);
 

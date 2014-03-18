@@ -1,0 +1,55 @@
+var $ = require("cheerio");
+var _ = require("underscore");
+
+module.exports = (function () {
+
+    var self = {},
+        options = {};
+
+    self.match = function (url) {
+        return "username";
+    }
+
+    self.initialize = function (username, folder) {
+        var url = "http://" + username + ".iteye.com";
+        options = _.extend(
+            options,
+            {
+                "url": "", // 主页
+                "firstListPageURL": url, // 如果需要根据url来获取数据来判定列表第一页，可以使用self.firstListPage
+                "gds": true,  // 文件名根据标题翻译成英文形式， 或者直接使用url链接作为文件名。 高大上的简写 ^_^
+                "folder": "export-folder",
+                "gzip": true
+            });
+
+        for (var key in options) {
+            if (!/^_/.test(key)) // _开头的内部使用
+                self[key] = options[key];
+        }
+    }
+
+    self.list = function (html) {
+        return false;
+    }
+
+    // 列表第一页
+    self.firstListPage = function (html) {
+        return nextFetchListPage();
+    }
+
+    self.next = function (html) {
+        return false;
+    }
+
+    self.raw = function (html) {
+        return {
+            "content": '',
+            "title": '',
+            "publishTime": new Date(),
+            "categories": []
+        }
+    }
+
+    return self;
+
+})();

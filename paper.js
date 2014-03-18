@@ -41,7 +41,7 @@ function date(pubDate) {
 }
 
 function time(pubDate) {
-    return dateformat(pubDate, "%Y-%m-%d %H-%M");
+    return dateformat(pubDate, "%Y-%m-%d %H:%M");
 }
 
 function dateformat(date, style) {
@@ -90,7 +90,20 @@ var converter = new Markdown.converter({
             replacement: function(innerHtml, el){
                 return innerHtml;
             }
+        },
+        {
+            selector: 'wbr',
+            replacement: function(innerHtml, el){
+                return innerHtml;
+            }
+        },
+        {
+            selector: 'font',
+            replacement: function(innerHtml, el){
+                return innerHtml;
+            }
         }
+
     ]
 });
 
@@ -115,9 +128,9 @@ function makeMd(detail) {
         "---" ,
         "layout: post",
         "title: \"" + title + "\"",
-        "date: " + time(publishTime) + "",
+        "time: " + time(publishTime) + "",
         "comments: true",
-        "categories: " + JSON.stringify(categories) + "",
+        "tags: " + JSON.stringify(categories) + "",
         "---",
         "",
         ""

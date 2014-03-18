@@ -1,12 +1,13 @@
 {
     "name": "exportblog",
     "description": "export public blog to local markdown files.",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "dependencies": {
         "cheerio": "0.13.1",
         "bufferhelper": "0.2.0",
         "underscore": "~1.5",
-        "iconv-lite": "0.2.11"
+        "iconv-lite": "0.2.11",
+		"commander": "2.1.0"
     },
     "author": {
         "name": "winseliu",

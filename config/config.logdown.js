@@ -1,18 +1,31 @@
 var $ = require("cheerio");
+var _ = require("underscore");
 
 module.exports = (function () {
 
     var self = {},
-        options = {
-            "url": "http://winseliu.logdown.com/",
-            "firstListPageURL": "http://winseliu.logdown.com/archives",
-            "gds": false,
-            "folder": "D:/winsegit/winse.github.com/logdown/_posts"
-        };
+        options = {};
 
-    for (var key in options) {
-        if (!/^_/.test(key)) // _开头的内部使用
-            self[key] = options[key];
+    self.match = function (url) {
+        var ms = url.match(/(http:\/\/)?([^.]*)\.(logdown\.com)/);
+        return ms && ms[2];
+    }
+
+    self.initialize = function (username, folder) {
+        var url = "http://" + username + ".logdown.com";
+        options = _.extend(
+            options,
+            {
+                "url": url,
+                "firstListPageURL": url + "/archives",
+                "gds": false,
+                "folder": folder || "D:/winsegit/winse.github.com/ext/logdown/_posts"
+            });
+
+        for (var key in options) {
+            if (!/^_/.test(key)) // _开头的内部使用
+                self[key] = options[key];
+        }
     }
 
     // XXX 不同的模板，获取方式不同！！

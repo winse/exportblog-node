@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+
+var fs = require("fs");
+var path = require("path");
+
+var program = require('commander');
+var $ = require("cheerio");
+
+var Blog = require("./../blog.js");
+var sites = require("./../config/site.js");
+
+var pkg = require('../package.json'),
+    version = pkg.version;
+
+function list(val) {
+    return val.split(',');
+}
+
+program
+    .version(version)
+    .usage('[options] [folder]')
+    .option('-u --username [user]', '博客ID')
+    .option('-t --type [type]', '博客类型，当前仅支持iteye|qzone|sohu|logdown。欢迎扩展导出其他博客！')
+    .option('--url [URL]', '博客主页')
+    .option('-l, --list [items]', '博客页面', list)
+    //.option('-i, --input [FILE]', '下载本地FILE 中的 URLs', listReadFromFile)
+    .option('--debug', '调试选项，会删除folder下的所有文件！');
+
+program.on('--help', function () {
+    console.log('  Examples:');
+    console.log('');
+    console.log('    $ exportblog --help');
+    console.log('    $ exportblog -h');
+    console.log('');
+
+    console.log('');
+    console.log('    ## 导出http://winse.iteye.com的所有日志');
+    console.log('    $ exportblog -u winse -t iteye D:/test/winse/_posts');
+    console.log('    $ exportblog --url winse.iteye.com');
+    console.log('');
+
+    console.log('');
+    console.log('    ## 导出指定日志');
+    console.log('    $ exportblog --list http://winse.iteye.com/blog/1830987');
+    console.log('');
+
+});
+
+program.parse(process.argv);
+
+function getType(url, folder) {
+
+    for (var index in sites) {
+        var st = sites[index];
+        var user = st.match(url);
+        if (user) {
+            init(st, user, folder);
+            return st;
+        }
+    }
+
+    throw new Error("输入错误，--url或者--type,--username必须定义一种！")
+}
+
+function init(site, user, folder) {
+    site.initialize(user, folder);
+    console.log(site.url + "-> " + user);
+}
+
+var folder = program.args.shift() || "./target/export/_posts";
+var username = program.username,
+    type = program.type,
+    url = program.url,
+    list = program.list || program.input;
+
+if (program.debug) {
+
+    var handle = function (f) {
+        if (!fs.existsSync(f)) {
+            return;
+        }
+
+        var stats = fs.statSync(f);
+        if (stats.isDirectory()) {
+            fs.readdirSync(f).forEach(
+                function (name) {
+                    handle(path.join(f, name));
+                }
+            );
+            // fs.rmdirSync(f);
+            // console.log(f + "目录已清空！")
+        } else {
+            fs.unlinkSync(f);
+            console.log('successfully deleted ' + f);
+        }
+    }
+
+    handle(folder);
+}
+
+var blog,
+    site;
+
+if (list) {
+    $(list).each(function (index, ele) {
+        if (!blog) {
+            site = getType(ele, folder);
+            blog = new Blog(site);
+        }
+        blog.export(ele);
+    });
+} else {
+    if (url) {
+        site = getType(url, folder);
+    } else if (type && username) {
+        site = sites[type];
+        init(site, username, folder);
+    }
+
+    blog = new Blog(site);
+    blog.exportAll();
+}

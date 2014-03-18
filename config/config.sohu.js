@@ -1,35 +1,48 @@
 var $ = require("cheerio");
+var _ = require("underscore");
+
 var dynamicJs = require("./block-javascript-parser")
 
 var sohu = (function () {
+
+    var self = {},
+        options = {},
+        _ebi
+        ;
+
+    self.match = function (url) {
+        var ms = url.match(/(http:\/\/)?([^.]*)\.(blog\.sohu\.com)/);
+        return ms && ms[2];
+    }
+
+    self.initialize = function (username, folder) {
+        options = _.extend(
+            options,
+            {
+                "username": username,
+                "url": "http://" + username + ".blog.sohu.com/entry/",
+                "gds": true,
+                "folder": folder || "D:/winsegit/winse.github.com/sohu/_posts",
+                "charset": "GBK",
+                "gzip": true
+            });
+
+        for (var key in options) {
+            if (!/^_/.test(key)) // _开头的内部使用
+                self[key] = options[key];
+        }
+    }
 
     var nextFetchListPage = (function () {
         var current_page = 1;
 
         // FIXME 会一直到max+1页！然后报错！
         return function () {
-            var pageURL = "http://winsefirst.blog.sohu.com/action/v_frag-ebi_" + _ebi + "-pg_" + current_page + "/entry/";
+            var pageURL = "http://" + options.username + ".blog.sohu.com/action/v_frag-ebi_" + _ebi + "-pg_" + current_page + "/entry/";
             current_page++;
             return pageURL;
         };
     })();
-
-    var self = {},
-        options = {
-            "url": "http://winsefirst.blog.sohu.com/entry/",
-            // see function firstListPage
-            "gds": true,
-            "folder": "D:/winsegit/winse.github.com/sohu/_posts",
-            "charset": "GBK",
-            "gzip": true
-        },
-        _ebi
-        ;
-
-    for (var key in options) {
-        if (!/^_/.test(key)) // _开头的内部使用
-            self[key] = options[key];
-    }
 
     self.list = function (html) {
         var $html = $(html);

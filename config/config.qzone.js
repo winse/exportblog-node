@@ -1,35 +1,49 @@
 var $ = require("cheerio")
+var _ = require("underscore");
+
 var dynamicJs = require("./block-javascript-parser")
 
 module.exports = (function () {
 
-    var qq = "10226799";
+    var self = {},
+        options = {};
+
+    self.match = function (url) {
+        var ms = url.match(/(http:\/\/)?(user\.qzone\.qq\.com\/)([^/]*)/);
+        return ms && ms[3];
+    }
+
+    self.initialize = function (qq, folder) {
+        options = _.extend(
+            options,
+            {
+                "username": qq,
+                "url": "http://user.qzone.qq.com/" + qq + "/",
+                 // 需要用到username参数，使用方法来进行延迟执行！
+                "firstListPageURL": nextFetchListPage,
+                "gds": true,
+                "folder": folder || "D:/winsegit/winse.github.com/ext/qzone/_posts",
+                "charset": "GBK"
+            });
+
+        for (var key in options) {
+            if (!/^_/.test(key)) // _开头的内部使用
+                self[key] = options[key];
+        }
+    }
+
     var nextFetchListPage = (function () {
         var pos = 0;
         var defaultNum = 50;
 
-        return function (n) {
-            var num = n || defaultNum;
+        return function (pageNum) {
+            var num = pageNum || defaultNum;
 
-            var pageURL = "http://b1.qzone.qq.com/cgi-bin/blognew/get_abs?hostUin=" + qq + "&blogType=0&cateName=&cateHex=&statYear=&reqInfo=1&pos=" + pos + "&num=" + num + "&sortType=0&absType=0&source=0";
+            var pageURL = "http://b1.qzone.qq.com/cgi-bin/blognew/get_abs?hostUin=" + options.username + "&blogType=0&cateName=&cateHex=&statYear=&reqInfo=1&pos=" + pos + "&num=" + num + "&sortType=0&absType=0&source=0";
             pos += num;
             return pageURL;
         };
     })();
-
-    var self = {},
-        options = {
-            "url": "http://user.qzone.qq.com/" + qq + "/",
-            "firstListPageURL": nextFetchListPage(),
-            "gds": true,
-            "folder": "D:/winsegit/winse.github.com/qzone" + qq + "/_posts",
-            "charset": "GBK"
-        };
-
-    for (var key in options) {
-        if (!/^_/.test(key)) // _开头的内部使用
-            self[key] = options[key];
-    }
 
     self.list = function (json) {
         var sandbox = dynamicJs("var blogs; function _Callback(json){blogs = json}; " + json);
@@ -37,7 +51,7 @@ module.exports = (function () {
         var list = blogs.data.list;
         if (list && list.length > 0) {
             return $(list).map(function (index, blog) {
-                return "http://b1.qzone.qq.com/cgi-bin/blognew/blog_output_data?uin=" + qq + "&blogid=" + blog.blogId + "&mode=2&numperpage=15&dprefix=&ref=qzone&page=1";
+                return "http://b1.qzone.qq.com/cgi-bin/blognew/blog_output_data?uin=" + options.username + "&blogid=" + blog.blogId + "&mode=2&numperpage=15&dprefix=&ref=qzone&page=1";
             });
         }
 
